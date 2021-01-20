@@ -1,25 +1,26 @@
-use std::fs::File;
-use std::io::{self, BufRead};
-use std::path::{Path, PathBuf};
+//use std::fs::File;
+use std::io::{self, Read};
+//use std::path::{Path, PathBuf};
 
 static INDENT_SHIFT: u8 = 4;
 
 fn main() {
-    println!("Hello, world!");
+    let mut stdin = io::stdin();
+    let mut contents = String::new();
+    stdin.read_to_string(&mut contents).expect("read stdin");
 
-    format_file(Path::new("NOTES.outlaw").to_path_buf()).expect("format file");
+    //let input = File::open(path)?;
+    //let buf_reader = io::BufReader::new(input);
+
+    format(contents);
 }
 
-fn format_file(path: PathBuf) -> io::Result<()> {
-    let input = File::open(path)?;
-    let buf_reader = io::BufReader::new(input);
-
+fn format(contents: String) {
     let mut indent_level = 0;
     let mut num_indent_whitespace = 0;
     let mut first_line_after_header = false;
 
-    for line in buf_reader.lines() {
-        let line = line?;
+    for line in contents.lines() {
         let trimmed_line = line.trim_start();
         let num_line_whitespace: u8 = (line.len() - trimmed_line.len()) as u8;
         let trimmed_line = trimmed_line.trim_end();
@@ -73,6 +74,4 @@ fn format_file(path: PathBuf) -> io::Result<()> {
             );
         }
     }
-
-    Ok(())
 }
