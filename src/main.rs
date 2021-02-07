@@ -35,24 +35,27 @@ fn format(contents: String) -> String {
             }
         }
 
+        if trimmed_line.len() == 0 {
+            formatted += "\n";
+            continue;
+        }
+
+        let new_indent_width;
         if trimmed_line.starts_with("===") {
-            // Determine if this header is meant as the start of a deeper, equal or shallower
-            // indentation
+            // Determine if this header is meant as the start of a deeper, equal or shallower indentation
 
             if num_line_whitespace > num_indent_whitespace {
                 indent_level += 1;
                 num_indent_whitespace = num_line_whitespace;
             } else if num_line_whitespace < num_indent_whitespace {
-                indent_level -= 1;
+                // This header can be on a parent, or even grandparent level
+                // compared to the previous one, shifting
+                // multiple identation levels to the left
+                indent_level = num_line_whitespace / INDENT_SHIFT;
                 num_indent_whitespace = num_line_whitespace;
             }
 
-            formatted += &format!(
-                "{}{}\n",
-                " ".repeat(((indent_level) * INDENT_SHIFT).into()),
-                trimmed_line
-            );
-
+            new_indent_width = indent_level * INDENT_SHIFT;
             first_line_after_header = true;
         } else {
             let mut body_text_ident: u8 = 1;
@@ -67,12 +70,10 @@ fn format(contents: String) -> String {
                 }
             }
 
-            formatted += &format!(
-                "{}{}\n",
-                " ".repeat(((body_text_ident + indent_level) * INDENT_SHIFT).into()),
-                trimmed_line
-            );
+            new_indent_width = (body_text_ident + indent_level) * INDENT_SHIFT;
         }
+
+        formatted += &format!("{}{}\n", " ".repeat(new_indent_width.into()), trimmed_line);
     }
 
     formatted
@@ -104,7 +105,6 @@ mod tests {
             .read_to_string(&mut expected)
             .expect("Read to string");
 
-        println!("{}", formatted);
         assert_eq!(formatted, expected);
     }
 }
