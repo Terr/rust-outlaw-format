@@ -1,6 +1,4 @@
-//use std::fs::File;
 use std::io::{self, Read};
-//use std::path::{Path, PathBuf};
 
 static INDENT_SHIFT: u8 = 4;
 
@@ -12,10 +10,12 @@ fn main() {
     //let input = File::open(path)?;
     //let buf_reader = io::BufReader::new(input);
 
-    format(contents);
+    println!("{}", format(contents));
 }
 
-fn format(contents: String) {
+fn format(contents: String) -> String {
+    let mut formatted = String::with_capacity(contents.len());
+
     let mut indent_level = 0;
     let mut num_indent_whitespace = 0;
     let mut first_line_after_header = false;
@@ -27,7 +27,7 @@ fn format(contents: String) {
 
         // Write an empty line after a new header
         if first_line_after_header {
-            println!();
+            formatted += "\n";
             first_line_after_header = false;
 
             if trimmed_line == "" {
@@ -47,8 +47,8 @@ fn format(contents: String) {
                 num_indent_whitespace = num_line_whitespace;
             }
 
-            println!(
-                "{}{}",
+            formatted += &format!(
+                "{}{}\n",
                 " ".repeat(((indent_level) * INDENT_SHIFT).into()),
                 trimmed_line
             );
@@ -67,11 +67,44 @@ fn format(contents: String) {
                 }
             }
 
-            println!(
-                "{}{}",
+            formatted += &format!(
+                "{}{}\n",
                 " ".repeat(((body_text_ident + indent_level) * INDENT_SHIFT).into()),
                 trimmed_line
             );
         }
+    }
+
+    formatted
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::fs::File;
+    use std::path::{Path, PathBuf};
+
+    fn format_file(path: PathBuf) -> String {
+        let mut file = File::open(path).expect("Open file");
+        let mut contents = String::new();
+        // TODO BufReader
+        file.read_to_string(&mut contents)
+            .expect("Read file to string");
+
+        format(contents)
+    }
+
+    #[test]
+    fn test_simple_case() {
+        let formatted = format_file(Path::new("tests/1.input").to_path_buf());
+
+        let mut expected = String::new();
+        File::open("tests/1.expected")
+            .expect("Open file")
+            .read_to_string(&mut expected)
+            .expect("Read to string");
+
+        println!("{}", formatted);
+        assert_eq!(formatted, expected);
     }
 }
