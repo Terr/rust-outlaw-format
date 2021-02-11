@@ -10,7 +10,7 @@ fn main() {
     //let input = File::open(path)?;
     //let buf_reader = io::BufReader::new(input);
 
-    println!("{}", format(&contents));
+    print!("{}", format(&contents));
 }
 
 fn format(contents: &str) -> String {
