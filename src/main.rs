@@ -2,6 +2,14 @@ use std::io::{self, Read};
 
 static INDENT_SHIFT: u8 = 4;
 
+#[derive(Debug, Eq, PartialEq)]
+enum Action {
+    Start,
+    InsertHeader,
+    InsertBlankLine,
+    InsertBodyText,
+}
+
 fn main() {
     let mut stdin = io::stdin();
     let mut contents = String::new();
@@ -18,7 +26,7 @@ fn format(contents: &str) -> String {
 
     let mut indent_level = 0;
     let mut num_indent_whitespace = 0;
-    let mut first_line_after_header = false;
+    let mut last_action = Action::Start;
 
     for line in contents.lines() {
         let trimmed_line = line.trim_start();
@@ -26,9 +34,9 @@ fn format(contents: &str) -> String {
         let trimmed_line = trimmed_line.trim_end();
 
         // Write an empty line after a new header
-        if first_line_after_header {
+        if last_action == Action::InsertHeader {
             formatted += "\n";
-            first_line_after_header = false;
+            last_action = Action::InsertBlankLine;
 
             if trimmed_line == "" {
                 continue;
@@ -36,14 +44,24 @@ fn format(contents: &str) -> String {
         }
 
         if trimmed_line.len() == 0 {
-            formatted += "\n";
+            // Don't allow repeated blank lines
+            if last_action != Action::InsertBlankLine {
+                formatted += "\n";
+                last_action = Action::InsertBlankLine;
+            }
             continue;
         }
 
         let new_indent_width;
         if trimmed_line.starts_with("===") {
-            // Determine if this header is meant as the start of a deeper, equal or shallower indentation
+            // Make sure header follows after a blank line, unless it's the first line of the file
+            #[allow(unused_assignments)]
+            if last_action != Action::InsertBlankLine && last_action != Action::Start {
+                formatted += "\n";
+                last_action = Action::InsertBlankLine;
+            }
 
+            // Determine if this header is meant as the start of a deeper, equal or shallower indentation
             if num_line_whitespace > num_indent_whitespace {
                 indent_level += 1;
                 num_indent_whitespace = num_line_whitespace;
@@ -56,7 +74,7 @@ fn format(contents: &str) -> String {
             }
 
             new_indent_width = indent_level * INDENT_SHIFT;
-            first_line_after_header = true;
+            last_action = Action::InsertHeader;
         } else {
             let mut body_text_ident: u8 = 1;
 
@@ -71,6 +89,7 @@ fn format(contents: &str) -> String {
             }
 
             new_indent_width = (body_text_ident + indent_level) * INDENT_SHIFT;
+            last_action = Action::InsertBodyText;
         }
 
         formatted += &format!("{}{}\n", " ".repeat(new_indent_width.into()), trimmed_line);
