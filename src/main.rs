@@ -107,4 +107,13 @@ mod tests {
 
         assert_eq!(formatted, expected);
     }
+
+    #[test]
+    /// Formatting a text for a second time should not result in a different output
+    fn test_format_twice() {
+        let first_format = format_file(Path::new("tests/1.input").to_path_buf());
+        let second_format = format(&first_format);
+
+        assert_eq!(first_format, second_format);
+    }
 }
