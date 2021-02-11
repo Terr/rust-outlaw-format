@@ -10,10 +10,10 @@ fn main() {
     //let input = File::open(path)?;
     //let buf_reader = io::BufReader::new(input);
 
-    println!("{}", format(contents));
+    println!("{}", format(&contents));
 }
 
-fn format(contents: String) -> String {
+fn format(contents: &str) -> String {
     let mut formatted = String::with_capacity(contents.len());
 
     let mut indent_level = 0;
@@ -92,7 +92,7 @@ mod tests {
         file.read_to_string(&mut contents)
             .expect("Read file to string");
 
-        format(contents)
+        format(&contents)
     }
 
     #[test]
