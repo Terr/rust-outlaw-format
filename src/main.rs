@@ -10,6 +10,12 @@ enum Action {
     InsertBodyText,
 }
 
+#[derive(Debug, Eq, PartialEq)]
+enum Context {
+    Text,
+    ListItem, // Currently processing a list item (started with a '* ')
+}
+
 fn main() {
     let mut stdin = io::stdin();
     let mut contents = String::new();
@@ -26,6 +32,7 @@ fn format(contents: &str) -> String {
 
     let mut indent_level = 0;
     let mut num_indent_whitespace = 0;
+    let mut context = Context::Text;
     let mut last_action = Action::Start;
 
     for line in contents.lines() {
@@ -38,7 +45,7 @@ fn format(contents: &str) -> String {
             formatted += "\n";
             last_action = Action::InsertBlankLine;
 
-            if trimmed_line == "" {
+            if trimmed_line.len() == 0 {
                 continue;
             }
         }
@@ -49,6 +56,11 @@ fn format(contents: &str) -> String {
                 formatted += "\n";
                 last_action = Action::InsertBlankLine;
             }
+
+            // A blank line also means that if we were handling a List, we've now reached the end
+            // of it
+            context = Context::Text;
+
             continue;
         }
 
@@ -61,34 +73,56 @@ fn format(contents: &str) -> String {
                 last_action = Action::InsertBlankLine;
             }
 
-            // Determine if this header is meant as the start of a deeper, equal or shallower indentation
-            if num_line_whitespace > num_indent_whitespace {
-                indent_level += 1;
-                num_indent_whitespace = num_line_whitespace;
-            } else if num_line_whitespace < num_indent_whitespace {
-                // This header can be on a parent, or even grandparent level
-                // compared to the previous one, shifting
-                // multiple identation levels to the left
-                indent_level = num_line_whitespace / INDENT_SHIFT;
-                num_indent_whitespace = num_line_whitespace;
+            // A header means a new indent level if it is a child, parent or even grand parent of a
+            // previous header. Calculate that indent level.
+            if num_line_whitespace != num_indent_whitespace {
+                if num_line_whitespace > (indent_level + 1) * INDENT_SHIFT {
+                    num_indent_whitespace = indent_level * INDENT_SHIFT;
+                    indent_level += 1;
+                } else {
+                    indent_level = num_line_whitespace / INDENT_SHIFT;
+                    num_indent_whitespace = num_line_whitespace;
+                }
             }
 
             new_indent_width = indent_level * INDENT_SHIFT;
             last_action = Action::InsertHeader;
         } else {
             let mut body_text_ident: u8 = 1;
+            let mut extra_spaces: u8 = 0;
 
             // Lists are allowed to have extra indentation
             if trimmed_line.starts_with('*') {
-                if num_line_whitespace > num_indent_whitespace {
+                context = Context::ListItem;
+
+                if num_line_whitespace > (indent_level + body_text_ident) * INDENT_SHIFT {
                     // Assumes that the type of indentation (spaces or tabs) used for this line was
-                    //the same as what was used for the header
-                    body_text_ident = num_line_whitespace
-                        / (num_indent_whitespace + (body_text_ident * INDENT_SHIFT));
+                    // the same as what was used for the header
+                    body_text_ident = ((num_line_whitespace as f64
+                        / (indent_level * INDENT_SHIFT) as f64)
+                        .ceil()) as u8
+                        - 1;
                 }
+            } else if context == Context::ListItem {
+                // List items that have been broken up with newlines get some extra indenting, so
+                // that the text of subsequent lines line up with the '* ' of the start of the list
+                // item.
+                extra_spaces += 2;
+
+                let list_item_whitespace =
+                    if num_line_whitespace % 4 != 0 && num_line_whitespace % 2 == 0 {
+                        num_line_whitespace - 2
+                    } else {
+                        num_line_whitespace
+                    };
+
+                body_text_ident = ((list_item_whitespace as f64
+                    / (indent_level * INDENT_SHIFT) as f64)
+                    .ceil()) as u8
+                    - 1;
             }
 
-            new_indent_width = (body_text_ident + indent_level) * INDENT_SHIFT;
+            new_indent_width = (body_text_ident + indent_level) * INDENT_SHIFT + extra_spaces;
             last_action = Action::InsertBodyText;
         }
 
