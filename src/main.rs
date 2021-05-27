@@ -114,6 +114,25 @@ mod tests {
         format(&contents)
     }
 
+    fn assert_equal(a: &str, b: &str) {
+        if !(*a == *b) {
+            let zipped_lines = a.lines().zip(b.lines());
+
+            for lines in zipped_lines {
+                if lines.0 == lines.1 {
+                    println!("  {}", lines.0);
+                } else {
+                    println!("---");
+                    println!("<!{}", lines.0);
+                    println!(">!{}", lines.1);
+                    println!("---");
+                }
+            }
+
+            panic!("Strings are not equal");
+        }
+    }
+
     #[test]
     fn test_simple_case() {
         let formatted = format_file(Path::new("tests/1.input").to_path_buf());
@@ -124,7 +143,7 @@ mod tests {
             .read_to_string(&mut expected)
             .expect("Read to string");
 
-        assert_eq!(formatted, expected);
+        assert_equal(&formatted, &expected);
     }
 
     #[test]
@@ -133,6 +152,6 @@ mod tests {
         let first_format = format_file(Path::new("tests/1.input").to_path_buf());
         let second_format = format(&first_format);
 
-        assert_eq!(first_format, second_format);
+        assert_equal(&first_format, &second_format);
     }
 }
