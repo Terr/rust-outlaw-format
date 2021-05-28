@@ -1,6 +1,8 @@
+use std::convert::TryFrom;
+
 use std::io::{self, Read};
 
-static INDENT_SHIFT: u8 = 4;
+static INDENT_SHIFT: i8 = 4;
 
 #[derive(Debug, Eq, PartialEq)]
 enum Action {
@@ -30,14 +32,13 @@ fn main() {
 fn format(contents: &str) -> String {
     let mut formatted = String::with_capacity(contents.len());
 
-    let mut indent_level = 0;
-    let mut num_indent_whitespace = 0;
+    let mut indent_level: i8 = -1;
     let mut context = Context::Text;
     let mut last_action = Action::Start;
 
     for line in contents.lines() {
         let trimmed_line = line.trim_start();
-        let num_line_whitespace: u8 = (line.len() - trimmed_line.len()) as u8;
+        let num_line_whitespace: i8 = (line.len() - trimmed_line.len()) as i8;
         let trimmed_line = trimmed_line.trim_end();
 
         // Write an empty line after a new header
@@ -75,33 +76,31 @@ fn format(contents: &str) -> String {
 
             // A header means a new indent level if it is a child, parent or even grand parent of a
             // previous header. Calculate that indent level.
-            if num_line_whitespace != num_indent_whitespace {
+            if num_line_whitespace != indent_level * INDENT_SHIFT {
                 if num_line_whitespace > (indent_level + 1) * INDENT_SHIFT {
-                    num_indent_whitespace = indent_level * INDENT_SHIFT;
                     indent_level += 1;
                 } else {
                     indent_level = num_line_whitespace / INDENT_SHIFT;
-                    num_indent_whitespace = num_line_whitespace;
                 }
             }
 
             new_indent_width = indent_level * INDENT_SHIFT;
             last_action = Action::InsertHeader;
         } else {
-            let mut body_text_ident: u8 = 1;
-            let mut extra_spaces: u8 = 0;
+            dbg!(indent_level, trimmed_line);
+            let mut body_text_ident: i8 = indent_level + 1;
+            let mut extra_spaces: i8 = 0;
 
             // Lists are allowed to have extra indentation
             if trimmed_line.starts_with('*') {
                 context = Context::ListItem;
 
-                if num_line_whitespace > (indent_level + body_text_ident) * INDENT_SHIFT {
+                if num_line_whitespace > body_text_ident * INDENT_SHIFT {
                     // Assumes that the type of indentation (spaces or tabs) used for this line was
                     // the same as what was used for the header
                     body_text_ident = ((num_line_whitespace as f64
                         / (indent_level * INDENT_SHIFT) as f64)
-                        .ceil()) as u8
-                        - 1;
+                        .ceil()) as i8;
                 }
             } else if context == Context::ListItem {
                 // List items that have been broken up with newlines get some extra indenting, so
@@ -118,15 +117,15 @@ fn format(contents: &str) -> String {
 
                 body_text_ident = ((list_item_whitespace as f64
                     / (indent_level * INDENT_SHIFT) as f64)
-                    .ceil()) as u8
-                    - 1;
+                    .ceil()) as i8;
             }
 
-            new_indent_width = (body_text_ident + indent_level) * INDENT_SHIFT + extra_spaces;
+            new_indent_width = body_text_ident * INDENT_SHIFT + extra_spaces;
             last_action = Action::InsertBodyText;
         }
 
-        formatted += &format!("{}{}\n", " ".repeat(new_indent_width.into()), trimmed_line);
+        let indent = usize::try_from(new_indent_width).unwrap();
+        formatted += &format!("{}{}\n", " ".repeat(indent), trimmed_line);
     }
 
     formatted

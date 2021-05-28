@@ -1,3 +1,5 @@
+Dit is tekst boven de eerste header.
+
 === Begin
 
     ABC
@@ -8,6 +10,10 @@
     === DEF
 
         KEKEKEKE
+
+    === GEH
+
+        Test
 
 === Zomaar een random spatie indent
 
