@@ -87,7 +87,6 @@ fn format(contents: &str) -> String {
             new_indent_width = indent_level * INDENT_SHIFT;
             last_action = Action::InsertHeader;
         } else {
-            dbg!(indent_level, trimmed_line);
             let mut body_text_ident: i8 = indent_level + 1;
             let mut extra_spaces: i8 = 0;
 
