@@ -1,0 +1,25 @@
+=== Interpreted languages
+    === SQL
+        ```sql
+        SELECT * FROM a_table WHERE a_column = 42
+        ```
+    === Python
+        ~~~python
+        from enum import Enum
+
+
+        class Direction(Enum):
+            Up = 1
+            Right = 2
+            Down = 3
+            Left = 4
+        ~~~
+
+=== Compiled languages
+    === Names starting with a R
+        === Rust
+        ```rust
+        fn main() {
+            println!("Hello, world!");
+        }
+        ```

@@ -129,8 +129,11 @@ pub fn format_to_string(document: &Document) -> String {
         last_action = Action::InsertBlankLine;
 
         for formatted_line in block.contents.iter() {
-            if last_action == Action::InsertBlankLine && formatted_line.is_empty() {
-                // Don't output multiple blank lines in a row
+            if formatted_line.line_type != LineType::Preformatted
+                && last_action == Action::InsertBlankLine
+                && formatted_line.is_empty()
+            {
+                // Don't output multiple blank lines in a row for non-preformatted lines
                 continue;
             }
 

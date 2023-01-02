@@ -158,6 +158,14 @@ impl RawLine {
     pub fn is_preformatted(&self) -> bool {
         LineType::from_raw(&self.trimmed) == LineType::Preformatted
     }
+
+    pub fn contains_marker(&self) -> bool {
+        self.trimmed
+            .starts_with(consts::MARKER_FENCED_FILETYPE_BACKTICK)
+            || self
+                .trimmed
+                .starts_with(consts::MARKER_FENCED_FILETYPE_TILDE)
+    }
 }
 
 #[derive(Debug, Default, Clone, Eq, PartialEq)]
@@ -228,6 +236,10 @@ impl LineType {
             LineType::Header
         } else if line.starts_with(consts::PREFIX_BULLET_POINT) {
             LineType::ListBulletPoint
+        } else if line.starts_with(consts::MARKER_FENCED_FILETYPE_BACKTICK)
+            || line.starts_with(consts::MARKER_FENCED_FILETYPE_TILDE)
+        {
+            LineType::Preformatted
         } else if line.starts_with(consts::PREFIX_PREFORMATTED) {
             LineType::Preformatted
         } else if line.starts_with(consts::PREFIX_QUOTE) {

@@ -2,10 +2,17 @@ use std::cmp::Ordering;
 
 use crate::{Block, Document, FormattedLine, LineType, RawLine};
 
+enum Context {
+    Normal,
+    HandlingFencedFiletype { base_indent: usize },
+}
+
 /// Parses the lines of `contents` and determines the type of line (header, bullet point list,
 /// etc.) and decides the indenting each line needs to get.
 pub fn parse_document(contents: &str) -> Document {
     let mut document = Document::new();
+
+    let mut context = Context::Normal;
 
     for line in contents.lines() {
         let raw_line = RawLine::from_string(line);
@@ -26,12 +33,46 @@ pub fn parse_document(contents: &str) -> Document {
             let bullet_point_line = FormattedLine::from_raw(raw_line, indent_level);
 
             current_block.add_line(bullet_point_line);
+        } else if raw_line.contains_marker() {
+            // A marker for a fenced filetype was encountered. Until the marker is repeated all
+            // lines after this one should be considered to be preformatted.
+
+            context = match context {
+                Context::Normal => Context::HandlingFencedFiletype {
+                    base_indent: raw_line.num_indent,
+                },
+                Context::HandlingFencedFiletype { .. } => Context::Normal,
+            };
+
+            let current_block = document.last_block_mut();
+            let line = parse_text_line(current_block, raw_line);
+
+            current_block.add_line(line);
         } else {
             // In this case the line is either a normal line of text, some prefixed line (like a
             // quote or preformatted) or the continuation of a (line wrapped) bullet point.
 
             let current_block = document.last_block_mut();
-            let line = parse_text_line(current_block, raw_line);
+
+            let line = if let Context::HandlingFencedFiletype { base_indent } = context {
+                // This is a line that is part of a preformatted range of text (e.g. code)
+                //
+                // Preserve the existing indenting of the text/code in these lines that would
+                // otherwise be trimmed off.
+                FormattedLine {
+                    indent_level: current_block.indent_level() + 1,
+                    line_type: LineType::Preformatted,
+                    contents: format!(
+                        "{preformat_indent}{text}",
+                        preformat_indent =
+                            " ".repeat(raw_line.num_indent.saturating_sub(base_indent)),
+                        text = &raw_line.trimmed
+                    ),
+                    original_raw: raw_line,
+                }
+            } else {
+                parse_text_line(current_block, raw_line)
+            };
 
             current_block.add_line(line);
         };
@@ -111,7 +152,7 @@ fn parse_text_line(current_block: &mut Block, raw_line: RawLine) -> FormattedLin
             FormattedLine::from_raw(raw_line, current_block.indent_level() + 1)
         } else {
             // This applies to empty lines and to lines of text that are placed before the
-            // first header line.
+            // very first header of the document.
 
             FormattedLine::from_raw(raw_line, current_block.indent_level())
         }

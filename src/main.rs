@@ -100,7 +100,12 @@ mod tests {
     }
 
     #[test]
-    fn format_fenced_filetypes() {}
+    fn format_fenced_filetypes() {
+        let expected = read_file(Path::new("tests/fenced_filetypes.expected")).unwrap();
+        let actual = format_file(Path::new("tests/fenced_filetypes.input"));
+
+        assert_equal(&actual, &expected);
+    }
 
     #[test]
     fn wrapping_long_lines() {
