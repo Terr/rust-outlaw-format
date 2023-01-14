@@ -43,7 +43,7 @@ pub fn wrap_long_lines(formatted_lines: &mut Vec<FormattedLine>, max_line_length
             if current_line.contents.len() > max_line_length {
                 // Find a word boundary to split the string at
                 let prefix_length = current_line.line_type.get_prefix().len();
-                if let Some(split_pos) = current_line
+                let split_pos = if let Some(split_pos) = current_line
                     .contents
                     .chars()
                     // We skip the prefix so that any whitespace in it will not satisfy the
@@ -55,34 +55,45 @@ pub fn wrap_long_lines(formatted_lines: &mut Vec<FormattedLine>, max_line_length
                     .collect::<String>()
                     .rfind(|i: char| i.is_whitespace())
                 {
-                    let (line_a, line_b) =
-                        current_line.contents.split_at(prefix_length + split_pos);
+                    prefix_length + split_pos
+                } else if let Some(split_pos) = current_line
+                    .contents
+                    .chars()
+                    .skip(max_line_length)
+                    .position(|i| i.is_whitespace())
+                {
+                    // Line is too long but has no word boundary to split at within the first
+                    // `max_line_length` characters. This can happen if the line begins with a very
+                    // long URL. Use the first word boundary *after* the `max_line_length` in such
+                    // cases and split there instead.
 
-                    let line_type = if current_line.is_list_item() {
-                        LineType::ListContinuousLine
-                    } else {
-                        current_line.line_type
-                    };
-
-                    // This FormattedLine will be placed below (line index + 1) the `current_line` in
-                    // the document
-                    lines_to_insert.push((
-                        index + 1,
-                        FormattedLine {
-                            contents: format!("{}{}", line_type.get_prefix(), line_b.trim()),
-                            line_type,
-
-                            ..current_line.clone()
-                        },
-                    ));
-
-                    current_line.contents = line_a.to_owned();
+                    max_line_length + split_pos
                 } else {
-                    // Line is too long but has no word boundary to split at. This can happen with
-                    // very long URLs. Instead, leave the line as is and simply continue with the
-                    // next line of the document.
+                    // Cannot find any good split position, just continue with the next line
                     continue;
-                }
+                };
+
+                let (line_a, line_b) = current_line.contents.split_at(split_pos);
+
+                let line_type = if current_line.is_list_item() {
+                    LineType::ListContinuousLine
+                } else {
+                    current_line.line_type
+                };
+
+                // This FormattedLine will be placed below (line index + 1) the `current_line` in
+                // the document
+                lines_to_insert.push((
+                    index + 1,
+                    FormattedLine {
+                        contents: format!("{}{}", line_type.get_prefix(), line_b.trim()),
+                        line_type,
+
+                        ..current_line.clone()
+                    },
+                ));
+
+                current_line.contents = line_a.to_owned();
             }
         }
 

@@ -21,3 +21,7 @@
     === Header 1.5
 
         * ThisLineIsVeryLongButHasNoWordBoundaryToSplitOnThisCanHappenWithVeryLongUrlsSoInsteadItShouldRemainAsItIsToNotBreakTheLink
+
+    === Header 1.6
+
+        * ThisLineIsVeryLongButHasNoWordBoundaryToSplitOnThisCanHappenWithVeryLongUrlsSoInsteadItShouldRemainAsItIsToNotBreakTheLink but this text should be moved to a new line
