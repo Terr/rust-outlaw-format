@@ -97,7 +97,7 @@ pub fn wrap_long_lines(formatted_lines: &mut Vec<FormattedLine>, max_line_length
             }
         }
 
-        lines_were_changed = Some(lines_to_insert.len() > 0);
+        lines_were_changed = Some(!lines_to_insert.is_empty());
         formatted_lines.reserve(lines_to_insert.len());
         for (index_offset, (index, line_to_insert)) in lines_to_insert.into_iter().enumerate() {
             // For every line that is added (inserted) it increases the line number for the next
