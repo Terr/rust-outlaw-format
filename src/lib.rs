@@ -123,10 +123,6 @@ pub struct RawLine {
 }
 
 impl RawLine {
-    pub fn empty() -> Self {
-        RawLine::default()
-    }
-
     pub fn from_string(raw: &str) -> Self {
         let trimmed = raw.trim_start();
         let num_indent = raw.len() - trimmed.len();
@@ -149,14 +145,6 @@ impl RawLine {
 
     pub fn is_header(&self) -> bool {
         LineType::from_raw(&self.trimmed) == LineType::Header
-    }
-
-    pub fn is_quote(&self) -> bool {
-        LineType::from_raw(&self.trimmed) == LineType::Quote
-    }
-
-    pub fn is_preformatted(&self) -> bool {
-        LineType::from_raw(&self.trimmed) == LineType::Preformatted
     }
 
     pub fn contains_marker(&self) -> bool {
@@ -194,17 +182,9 @@ impl FormattedLine {
         self.contents.len() == 0
     }
 
-    pub fn is_header(&self) -> bool {
-        self.line_type == LineType::Header
-    }
-
     pub fn is_list_item(&self) -> bool {
         self.line_type == LineType::ListBulletPoint
             || self.line_type == LineType::ListContinuousLine
-    }
-
-    pub fn is_quote(&self) -> bool {
-        self.line_type == LineType::Quote
     }
 
     pub fn num_indent(&self) -> usize {
