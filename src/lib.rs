@@ -1,10 +1,10 @@
-pub use formatting::{format_to_string, wrap_long_lines};
-pub use parsing::parse_document;
-
 pub mod consts;
 
 mod formatting;
 mod parsing;
+
+pub use formatting::{format_to_string, wrap_long_lines};
+pub use parsing::parse_document;
 
 pub fn format(contents: &str) -> String {
     let contents = contents;
@@ -40,19 +40,19 @@ impl Document {
         self.blocks.push(block);
     }
 
-    pub fn last_block(&self) -> &Block {
+    fn last_block(&self) -> &Block {
         self.blocks
             .last()
             .expect("there should always be at least one Block")
     }
 
-    pub fn last_block_mut(&mut self) -> &mut Block {
+    fn last_block_mut(&mut self) -> &mut Block {
         self.blocks
             .last_mut()
             .expect("there should always be at least one Block")
     }
 
-    pub fn find_latest_block_with_raw_indent(&self, num_indent: usize) -> Option<&Block> {
+    fn find_latest_block_with_raw_indent(&self, num_indent: usize) -> Option<&Block> {
         self.blocks
             .iter()
             .rev()
@@ -84,30 +84,30 @@ impl Block {
         self.contents.push(line);
     }
 
-    pub fn indent_level(&self) -> usize {
+    fn indent_level(&self) -> usize {
         self.header.indent_level
     }
 
-    pub fn has_header(&self) -> bool {
+    fn has_header(&self) -> bool {
         !self.header.is_empty()
     }
 
-    pub fn raw_header_indent(&self) -> usize {
+    fn raw_header_indent(&self) -> usize {
         self.header.original_raw.num_indent
     }
 
-    pub fn last_line(&self) -> Option<&FormattedLine> {
+    fn last_line(&self) -> Option<&FormattedLine> {
         self.contents.iter().last()
     }
 
-    pub fn find_previous_of(&self, line_type: LineType) -> Option<&FormattedLine> {
+    fn find_previous_of(&self, line_type: LineType) -> Option<&FormattedLine> {
         self.contents
             .iter()
             .rev()
             .find(|line| line.line_type == line_type)
     }
 
-    pub fn find_latest_line_with_raw_indent(&self, num_indent: usize) -> Option<&FormattedLine> {
+    fn find_latest_line_with_raw_indent(&self, num_indent: usize) -> Option<&FormattedLine> {
         self.contents
             .iter()
             .rev()
@@ -117,9 +117,9 @@ impl Block {
 
 #[derive(Debug, Default, Clone, Eq, PartialEq)]
 pub struct RawLine {
-    pub num_indent: usize,
-    pub raw: String,
-    pub trimmed: String,
+    num_indent: usize,
+    raw: String,
+    trimmed: String,
 }
 
 impl RawLine {
@@ -135,19 +135,19 @@ impl RawLine {
         }
     }
 
-    pub fn is_empty(&self) -> bool {
+    fn is_empty(&self) -> bool {
         self.raw.trim().is_empty()
     }
 
-    pub fn is_bullet_point(&self) -> bool {
+    fn is_bullet_point(&self) -> bool {
         LineType::from_raw(&self.trimmed) == LineType::ListBulletPoint
     }
 
-    pub fn is_header(&self) -> bool {
+    fn is_header(&self) -> bool {
         LineType::from_raw(&self.trimmed) == LineType::Header
     }
 
-    pub fn contains_marker(&self) -> bool {
+    fn contains_marker(&self) -> bool {
         self.trimmed
             .starts_with(consts::MARKER_FENCED_FILETYPE_BACKTICK)
             || self
@@ -158,10 +158,10 @@ impl RawLine {
 
 #[derive(Debug, Default, Clone, Eq, PartialEq)]
 pub struct FormattedLine {
+    contents: String,
     indent_level: usize,
-    pub line_type: LineType,
-    pub contents: String,
-    pub original_raw: RawLine,
+    line_type: LineType,
+    original_raw: RawLine,
 }
 
 impl FormattedLine {
@@ -171,23 +171,23 @@ impl FormattedLine {
 
     pub fn from_raw(raw_line: RawLine, indent_level: usize) -> Self {
         FormattedLine {
+            contents: raw_line.trimmed.clone(),
             indent_level,
             line_type: LineType::from_raw(&raw_line.trimmed),
-            contents: raw_line.trimmed.clone(),
             original_raw: raw_line,
         }
     }
 
-    pub fn is_empty(&self) -> bool {
+    fn is_empty(&self) -> bool {
         self.contents.len() == 0
     }
 
-    pub fn is_list_item(&self) -> bool {
+    fn is_list_item(&self) -> bool {
         self.line_type == LineType::ListBulletPoint
             || self.line_type == LineType::ListContinuousLine
     }
 
-    pub fn num_indent(&self) -> usize {
+    fn num_indent(&self) -> usize {
         self.indent_level * consts::INDENT_SHIFT
     }
 }
@@ -211,7 +211,7 @@ pub enum LineType {
 impl LineType {
     /// Note that this function cannot determine if a line is a 'continuation line' in a bullet
     /// point list since that requires knowledge about the line preceding this one.
-    pub fn from_raw(line: &str) -> Self {
+    fn from_raw(line: &str) -> Self {
         if line.starts_with(consts::PREFIX_HEADER) {
             LineType::Header
         } else if line.starts_with(consts::PREFIX_BULLET_POINT) {
@@ -228,7 +228,7 @@ impl LineType {
         }
     }
 
-    pub fn get_prefix(&self) -> &str {
+    fn get_prefix(&self) -> &str {
         match self {
             Self::Header => consts::PREFIX_HEADER,
             Self::ListBulletPoint => consts::PREFIX_BULLET_POINT,
