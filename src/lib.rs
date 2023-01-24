@@ -238,9 +238,8 @@ impl LineType {
             LineType::ListBulletPoint
         } else if line.starts_with(consts::MARKER_FENCED_FILETYPE_BACKTICK)
             || line.starts_with(consts::MARKER_FENCED_FILETYPE_TILDE)
+            || line.starts_with(consts::PREFIX_PREFORMATTED)
         {
-            LineType::Preformatted
-        } else if line.starts_with(consts::PREFIX_PREFORMATTED) {
             LineType::Preformatted
         } else if line.starts_with(consts::PREFIX_QUOTE) {
             LineType::Quote
