@@ -2,7 +2,9 @@ use std::hint::black_box;
 
 use criterion::{criterion_group, criterion_main, Criterion};
 
-use outlaw_format::{consts, format, format_to_string, parse_document, wrap_long_lines};
+use outlaw_format::{
+    consts, format, format_to_string, parse_document, wrap_long_lines, FormattedLine, RawLine,
+};
 
 fn bench_format_outlaw_file(c: &mut Criterion) {
     let outlaw_file = include_str!("long_document.input");
@@ -21,12 +23,16 @@ fn bench_parse_document(c: &mut Criterion) {
 }
 
 fn bench_wrap_long_lines(c: &mut Criterion) {
-    c.bench_function("parse document + wrap long lines", |b| {
+    let long_lines = include_str!("long_document.input")
+        .split("\n")
+        .map(|line| RawLine::from_string(line))
+        .map(|raw_line| FormattedLine::from_raw(raw_line, 0))
+        .collect::<Vec<FormattedLine>>();
+
+    c.bench_function("wrap long lines", |b| {
         b.iter(|| {
-            let mut document = parse_document(include_str!("long_document.input"));
-            for block in document.blocks.iter_mut() {
-                wrap_long_lines(&mut block.contents, consts::MAX_LINE_LENGTH);
-            }
+            let mut lines = long_lines.clone();
+            wrap_long_lines(&mut lines, consts::MAX_LINE_LENGTH);
         })
     });
 }

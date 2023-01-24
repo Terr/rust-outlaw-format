@@ -68,8 +68,8 @@ impl Default for Document {
 
 #[derive(Debug)]
 pub struct Block {
-    pub header: FormattedLine,
-    pub contents: Vec<FormattedLine>,
+    contents: Vec<FormattedLine>,
+    header: FormattedLine,
 }
 
 impl Block {
