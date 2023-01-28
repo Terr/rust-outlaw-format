@@ -1,6 +1,6 @@
 use std::hint::black_box;
 
-use criterion::{criterion_group, criterion_main, Criterion};
+use criterion::{criterion_group, criterion_main, BatchSize, Criterion};
 
 use outlaw_format::{
     consts, format, format_to_string, parse_document, wrap_long_lines, FormattedLine, RawLine,
@@ -30,10 +30,13 @@ fn bench_wrap_long_lines(c: &mut Criterion) {
         .collect::<Vec<FormattedLine>>();
 
     c.bench_function("wrap long lines", |b| {
-        b.iter(|| {
-            let mut lines = long_lines.clone();
-            wrap_long_lines(&mut lines, consts::MAX_LINE_LENGTH);
-        })
+        b.iter_batched(
+            || long_lines.clone(),
+            |mut lines| {
+                wrap_long_lines(&mut lines, consts::MAX_LINE_LENGTH);
+            },
+            BatchSize::SmallInput,
+        )
     });
 }
 
