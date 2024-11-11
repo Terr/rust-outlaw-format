@@ -7,8 +7,6 @@ pub use formatting::{format_to_string, wrap_long_lines};
 pub use parsing::parse_document;
 
 pub fn format(contents: &str) -> String {
-    let contents = contents;
-
     // Step 1: parse raw lines
     let mut document = parse_document(contents);
 
@@ -70,13 +68,17 @@ impl Default for Document {
 pub struct Block {
     contents: Vec<FormattedLine>,
     header: FormattedLine,
+    is_before_first_header: bool,
 }
 
 impl Block {
     pub fn new(header: FormattedLine) -> Self {
+        let is_before_first_header = header.is_empty();
+
         Block {
             header,
             contents: Vec::new(),
+            is_before_first_header,
         }
     }
 
@@ -84,8 +86,13 @@ impl Block {
         self.contents.push(line);
     }
 
-    fn indent_level(&self) -> usize {
-        self.header.indent_level
+    /// Returns the indentation level of the text contents the `Block` and sibling headers
+    fn contents_indent_level(&self) -> usize {
+        if self.is_before_first_header {
+            0
+        } else {
+            self.header.indent_level + 1
+        }
     }
 
     fn has_header(&self) -> bool {

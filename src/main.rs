@@ -76,8 +76,8 @@ mod tests {
 
     #[test]
     fn format_full_document() {
-        let actual = format_file(Path::new("tests/1.input"));
-        let expected = read_file(Path::new("tests/1.expected")).unwrap();
+        let actual = format_file(Path::new("tests/full_document.input"));
+        let expected = read_file(Path::new("tests/full_document.expected")).unwrap();
 
         assert_equal(&actual, &expected);
     }
@@ -85,7 +85,7 @@ mod tests {
     /// Formatting a text for a second time should not result in a different output
     #[test]
     fn format_full_document_twice() {
-        let first_format = format_file(Path::new("tests/1.input"));
+        let first_format = format_file(Path::new("tests/full_document.input"));
         let second_format = format(&first_format);
 
         assert_equal(&second_format, &first_format);

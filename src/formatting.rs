@@ -45,7 +45,9 @@ pub fn wrap_long_lines(formatted_lines: &mut Vec<FormattedLine>, max_line_length
             }
 
             // Find a word boundary to split the string at
-            let Some(split_pos) = find_word_boundary(current_line, max_line_length) else { continue; };
+            let Some(split_pos) = find_word_boundary(current_line, max_line_length) else {
+                continue;
+            };
 
             // This FormattedLine will be placed below (line index + 1) the `current_line` in
             // the document

@@ -60,7 +60,7 @@ pub fn parse_document(contents: &str) -> Document {
                 // Preserve the existing indenting of the text/code in these lines that would
                 // otherwise be trimmed off.
                 FormattedLine {
-                    indent_level: current_block.indent_level() + 1,
+                    indent_level: current_block.contents_indent_level(),
                     line_type: LineType::Preformatted,
                     contents: format!(
                         "{preformat_indent}{text}",
@@ -89,16 +89,16 @@ fn determine_new_header_indent(document: &Document, raw_line: &RawLine) -> usize
 
     match previous_block.raw_header_indent().cmp(&raw_line.num_indent) {
         // New header is a sibling (at the same level) of the previous header
-        Ordering::Equal => previous_block.indent_level(),
+        Ordering::Equal => previous_block.contents_indent_level().saturating_sub(1),
 
         // New header is a parent of *a* previous header
         Ordering::Greater => document
             .find_latest_block_with_raw_indent(raw_line.num_indent)
-            .map(|block| block.indent_level())
+            .map(|block| block.contents_indent_level().saturating_sub(1))
             .unwrap_or(0),
 
         // New header is a child of the previous header
-        Ordering::Less => previous_block.indent_level() + 1,
+        Ordering::Less => previous_block.contents_indent_level(),
     }
 }
 
@@ -120,12 +120,15 @@ fn determine_new_bullet_point_indent(current_block: &Block, raw_line: &RawLine) 
             Ordering::Equal => previous_list_item.indent_level,
 
             // List item is shifted one or more levels to the left compared to the previous
-            // bullet point in the list. Find the first line (starting from the last line)
-            // that had the same indenting in the original raw file.
+            // bullet point in the list. This can mean the previous list was interrupted by some
+            // text, signalling the end of that list and meaning that this is a new list.
+            //
+            // Find the first line (starting from the last line) that had the same indenting in the
+            // original raw file.
             Ordering::Greater => current_block
                 .find_latest_line_with_raw_indent(raw_line.num_indent)
                 .map(|line| line.indent_level)
-                .unwrap_or(current_block.indent_level() + 1),
+                .unwrap_or(current_block.contents_indent_level()),
 
             // List item is shifted right compared to the previous bullet point. Only one
             // level of indenting per line can be added per line.
@@ -134,7 +137,7 @@ fn determine_new_bullet_point_indent(current_block: &Block, raw_line: &RawLine) 
     } else if let Some(previous_text) = current_block.find_previous_of(LineType::Text) {
         previous_text.indent_level
     } else {
-        0
+        current_block.contents_indent_level()
     }
 }
 
@@ -153,16 +156,16 @@ fn parse_text_line(current_block: &mut Block, raw_line: RawLine) -> FormattedLin
             }
         } else if current_block.has_header() {
             // Non-bullet list Contents of a block follow the block's indent level plus one
-            FormattedLine::from_raw(raw_line, current_block.indent_level() + 1)
+            FormattedLine::from_raw(raw_line, current_block.contents_indent_level())
         } else {
             // This applies to empty lines and to lines of text that are placed before the
             // very first header of the document.
 
-            FormattedLine::from_raw(raw_line, current_block.indent_level())
+            FormattedLine::from_raw(raw_line, current_block.contents_indent_level())
         }
     } else {
         // This applies to the first line after a header.
 
-        FormattedLine::from_raw(raw_line, current_block.indent_level() + 1)
+        FormattedLine::from_raw(raw_line, current_block.contents_indent_level())
     }
 }
