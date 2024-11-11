@@ -1,0 +1,18 @@
+=== Header 1
+
+[ ] Item 1.A
+[x] Item 1.B
+
+    === Header 1.1
+
+    [ ] Item 1.1.A
+
+    === Header 1.2
+
+        [ ] Item 1.2.A
+
+=== Header 2
+
+    [ ] Item 2.A
+        [x] Item 2.A.A
+    [ ] Item 2.B

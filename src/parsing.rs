@@ -24,9 +24,9 @@ pub fn parse_document(contents: &str) -> Document {
             let header = FormattedLine::from_raw(raw_line, indent_level);
 
             document.add_block(Block::new(header));
-        } else if raw_line.is_bullet_point() {
-            // This case means that the line is either the start of a new bullet point list, or the
-            // continuation of one.
+        } else if raw_line.is_list_item() {
+            // This case means that the line is either the start of a new list (bullet point or
+            // TODO items), or the continuation of one.
 
             let current_block = document.last_block_mut();
             let indent_level = determine_new_bullet_point_indent(current_block, &raw_line);
@@ -103,17 +103,21 @@ fn determine_new_header_indent(document: &Document, raw_line: &RawLine) -> usize
 }
 
 fn determine_new_bullet_point_indent(current_block: &Block, raw_line: &RawLine) -> usize {
-    assert!(raw_line.is_bullet_point());
+    assert!(raw_line.is_list_item());
 
-    if let Some(previous_bullet_point) = current_block.find_previous_of(LineType::ListBulletPoint) {
-        match previous_bullet_point
+    let previous_list_item = current_block
+        .find_previous_of(LineType::ListBulletPoint)
+        .or_else(|| current_block.find_previous_of(LineType::ListTodoItem));
+
+    if let Some(previous_list_item) = previous_list_item {
+        match previous_list_item
             .original_raw
             .num_indent
             .cmp(&raw_line.num_indent)
         {
             // List item is continuation of the bullet point list at the same level of
             // indenting.
-            Ordering::Equal => previous_bullet_point.indent_level,
+            Ordering::Equal => previous_list_item.indent_level,
 
             // List item is shifted one or more levels to the left compared to the previous
             // bullet point in the list. Find the first line (starting from the last line)
@@ -125,7 +129,7 @@ fn determine_new_bullet_point_indent(current_block: &Block, raw_line: &RawLine) 
 
             // List item is shifted right compared to the previous bullet point. Only one
             // level of indenting per line can be added per line.
-            Ordering::Less => previous_bullet_point.indent_level + 1,
+            Ordering::Less => previous_list_item.indent_level + 1,
         }
     } else if let Some(previous_text) = current_block.find_previous_of(LineType::Text) {
         previous_text.indent_level

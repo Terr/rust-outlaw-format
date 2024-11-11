@@ -108,6 +108,15 @@ mod tests {
     }
 
     #[test]
+    fn format_list_with_todo_items() {
+        let expected = read_file(Path::new("tests/todo_items.expected")).unwrap();
+        let first_format = format_file(Path::new("tests/todo_items.input"));
+        let second_format = format(&first_format);
+
+        assert_equal(&second_format, &expected);
+    }
+
+    #[test]
     fn wrapping_long_lines() {
         let expected = read_file(Path::new("tests/long_lines.expected")).unwrap();
         let first_format = format_file(Path::new("tests/long_lines.input"));

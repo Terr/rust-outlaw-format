@@ -139,8 +139,11 @@ impl RawLine {
         self.raw.trim().is_empty()
     }
 
-    fn is_bullet_point(&self) -> bool {
-        LineType::from_raw(&self.trimmed) == LineType::ListBulletPoint
+    fn is_list_item(&self) -> bool {
+        matches!(
+            LineType::from_raw(&self.trimmed),
+            LineType::ListBulletPoint | LineType::ListTodoItem
+        )
     }
 
     fn is_header(&self) -> bool {
@@ -183,8 +186,10 @@ impl FormattedLine {
     }
 
     fn is_list_item(&self) -> bool {
-        self.line_type == LineType::ListBulletPoint
-            || self.line_type == LineType::ListContinuousLine
+        matches!(
+            self.line_type,
+            LineType::ListBulletPoint | LineType::ListTodoItem | LineType::ListContinuousLine
+        )
     }
 
     fn num_indent(&self) -> usize {
@@ -199,23 +204,28 @@ pub enum LineType {
     Header,
     /// Currently processing a list item that started with a '* '
     ListBulletPoint,
-    /// Currently processing a wrapped line that is part of the previous ListBulletPoint
+    /// Currently processing a wrapped line that is part of a list started on an earlier line
     ListContinuousLine,
-    /// A line that starts with a '|' is considered to be preformatted, and can be longer than the
-    /// maximum line length.
+    /// An item on a TODO list
+    ListTodoItem,
+    /// A line that starts with a '|' is considered to be preformatted, and *can* be longer than
+    /// the maximum line length.
     Preformatted,
     /// A line that is prefixed with a '>'
     Quote,
 }
 
 impl LineType {
-    /// Note that this function cannot determine if a line is a 'continuation line' in a bullet
+    /// Detects the type of the given `line` by looking at its first characters.
+    /// Note that this function cannot determine if the line is a 'continuation line' in a bullet
     /// point list since that requires knowledge about the line preceding this one.
     fn from_raw(line: &str) -> Self {
         if line.starts_with(consts::PREFIX_HEADER) {
             LineType::Header
         } else if line.starts_with(consts::PREFIX_BULLET_POINT) {
             LineType::ListBulletPoint
+        } else if line.starts_with(consts::PREFIX_TODO_ITEM) {
+            LineType::ListTodoItem
         } else if line.starts_with(consts::MARKER_FENCED_FILETYPE_BACKTICK)
             || line.starts_with(consts::MARKER_FENCED_FILETYPE_TILDE)
             || line.starts_with(consts::PREFIX_PREFORMATTED)
@@ -233,9 +243,18 @@ impl LineType {
             Self::Header => consts::PREFIX_HEADER,
             Self::ListBulletPoint => consts::PREFIX_BULLET_POINT,
             Self::ListContinuousLine => consts::PREFIX_LIST_CONTINUATION,
+            Self::ListTodoItem => consts::PREFIX_TODO_ITEM,
             Self::Preformatted => consts::PREFIX_PREFORMATTED,
             Self::Quote => consts::PREFIX_QUOTE,
             _ => "",
+        }
+    }
+
+    fn get_prefix_length(&self) -> usize {
+        match self {
+            // '[ ] ' or '[x] '
+            Self::ListTodoItem => 4,
+            _ => self.get_prefix().len(),
         }
     }
 }

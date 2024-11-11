@@ -112,7 +112,7 @@ pub fn format_to_string(document: &Document) -> String {
 
 /// Finds a word boundary (i.e. whitespace after a word) nearest to the maximum line length.
 fn find_word_boundary(line: &FormattedLine, max_line_length: usize) -> Option<usize> {
-    let prefix_length = line.line_type.get_prefix().len();
+    let prefix_length = line.line_type.get_prefix_length();
     if let Some(split_pos) = line
         .contents
         .chars()
