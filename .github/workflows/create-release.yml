@@ -1,5 +1,5 @@
-name: create-release
-run-name: Creating release for tag ${{ github.ref_name }}
+name: Create release
+run-name: Create release for tag ${{ github.ref_name }}
 
 on:
   push:
