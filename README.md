@@ -23,9 +23,9 @@ A formatter for the syntax of the [vim-outlaw](https://github.com/lifepillar/vim
 
 Because *vim-outlaw* uses indentation to indicate the hierarchy of a document (similar to, say, Python), the most important formatting rule has to do with how it determines the width of a line.
 
-Normally you would have a fixed line width (`textwidth` in vim) for the entire document but this is problematic for deeper levels of a Outlaw document. 
+Normally you would have a fixed line width (`textwidth` in vim) for the entire document but this is problematic for deeper levels of an Outlaw document.
 
-Because deeper levels have a (increasingly large) part of the fixed line width used up by indentation, the text on the line itself becomes narrower for each extra level, like a funnel. A simplified example with a line width of 64:
+Because deeper levels have an (increasingly large) part of the fixed line width used up by indentation, the text on the line itself becomes narrower for each extra level, like a funnel. A simplified example with a line width of 64:
 
     === Header 1
         
@@ -43,7 +43,7 @@ Because deeper levels have a (increasingly large) part of the fixed line width u
                             Lorem ipsum dolor sit amet,
                             consectetur adipiscing elit.
 
-I think deeper levels of a well-structured document are just as important (or maybe even more so) as the upper levels so this formatter makes text on all levels equally wide. In the simplified example above the text at header 6 would not be wrapped, just like it wasn't at header 1.
+I think deeper levels of a well-structured document are just as important (or maybe even more so) as the upper levels, so this formatter makes text on all levels equally wide. In the simplified example above the text at header 6 would not be wrapped, just like it wasn't at header 1.
 
 I would recommend setting `setlocal textwidth=0` for Outlaw documents in vim and let this formatter do the line wrapping instead, otherwise you have to battle vim's wrapping that doesn't take the amount of indentation into account.
 
