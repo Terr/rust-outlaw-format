@@ -61,4 +61,4 @@ Other formatting rules are based on my personal preferences and have to do with 
 
 The "fenced filetypes" feature (syntax highlighted blocks of text) of *vim-outlaw* is supported and the formatter doesn't try to reformat their contents.
 
-TODO lists are not handled yet.
+TODO lists (list items that start with `[ ]` or `[x]`) are also supported.
