@@ -1,5 +1,10 @@
 use crate::{Document, FormattedLine, LineType};
 
+#[cfg(not(windows))]
+const LINEBREAK: &str = "\n";
+#[cfg(windows)]
+const LINEBREAK: &str = "\r\n";
+
 #[derive(Debug, Eq, PartialEq)]
 enum Action {
     Start,
@@ -75,11 +80,11 @@ pub fn format_to_string(document: &Document) -> String {
 
     for block in document.blocks.iter() {
         if last_action == Action::InsertBodyText {
-            formatted += "\n";
+            formatted += LINEBREAK;
         }
 
         formatted += &format!(
-            "{indenting}{header}\n\n",
+            "{indenting}{header}{LINEBREAK}{LINEBREAK}",
             indenting = " ".repeat(block.header.num_indent()),
             header = block.header.contents
         );
@@ -95,12 +100,12 @@ pub fn format_to_string(document: &Document) -> String {
             }
 
             last_action = if formatted_line.is_empty() {
-                formatted += "\n";
+                formatted += LINEBREAK;
 
                 Action::InsertBlankLine
             } else {
                 formatted += &format!(
-                    "{indenting}{line}\n",
+                    "{indenting}{line}{LINEBREAK}",
                     indenting = " ".repeat(formatted_line.num_indent()),
                     line = formatted_line.contents
                 );
