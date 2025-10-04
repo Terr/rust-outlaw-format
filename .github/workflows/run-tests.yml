@@ -10,13 +10,17 @@ env:
 jobs:
   test:
     name: Test suite
-    runs-on: ubuntu-latest
     strategy:
       matrix:
+        os:
+          - ubuntu-24.04
+          - macos-15
+          - windows-2022
         toolchain:
           - stable
-          - beta
-          - nightly
+
+    runs-on: ${{ matrix.os }}
+
     steps:
       - uses: actions/checkout@v4
       - run: rustup update ${{ matrix.toolchain }} && rustup default ${{ matrix.toolchain }}
