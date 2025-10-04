@@ -33,8 +33,15 @@ jobs:
           binary_extension:
 
           # macOS
+          ## ARM
         - build: macos
-          os: macos-12
+          os: macos-15
+          rust: stable
+          target: aarch64-apple-darwin
+          binary_extension:
+          ## Intel
+        - build: macos
+          os: macos-15-intel
           rust: stable
           target: x86_64-apple-darwin
           binary_extension:
